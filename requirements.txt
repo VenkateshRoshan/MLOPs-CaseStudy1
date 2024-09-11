@@ -1,0 +1,13 @@
+torch
+accelerate
+opencv-python
+spaces
+torchvision
+pillow
+numpy
+huggingface-hub
+gradio
+gradio-imageslider
+transformers
+timm
+kornia
