@@ -18,3 +18,13 @@ jobs:
           curl -X POST -H "Content-Type: application/json" \
           -d "{\"content\": \"@everyone 🔥 **A new commit was pushed to the main branch by $GITHUB_ACTOR** 🔥\\n**Commit Message:** ${COMMIT_MESSAGE} \\n**Commit URL:** ${COMMIT_URL}\"}" \
           $DISCORD_WEBHOOK_URL
+
+      - name: SendTeamsNotification
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK }}
+        run: |
+            COMMIT_URL="${{ github.event.head_commit.url }}"
+            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+            curl -X POST -H "Content-Type: application/json" \
+            -d "{\"content\": \"@everyone 🔥 **A new commit was pushed to the main branch by $GITHUB_ACTOR** 🔥\\n**Commit Message:** ${COMMIT_MESSAGE} \\n**Commit URL:** ${COMMIT_URL}\"}" \
+            $TEAMS_WEBHOOK_URL    
