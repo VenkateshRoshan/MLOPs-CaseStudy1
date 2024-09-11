@@ -74,11 +74,12 @@ slider = ImageSlider(label='birefnet', type="pil")
 image = gr.Image(label="Upload an Image")
 
 butterfly = Image.open("butterfly.png")
+Dog = Image.open('Dog.jpg')
 
 time_taken = gr.Textbox(label="Time taken", type="text")
 
 demo = gr.Interface(
-    segment_image, inputs=image, outputs=[slider,time_taken], examples=[butterfly], api_name="BiRefNet")
+    segment_image, inputs=image, outputs=[slider,time_taken], examples=[butterfly,Dog], api_name="BiRefNet")
 
 if __name__ == '__main__' :
     demo.launch()
