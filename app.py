@@ -84,69 +84,159 @@
 # if __name__ == '__main__' :
 #     demo.launch()
 
+# import requests
+# import gradio as gr
+# import tempfile
+# import os
+# from transformers import pipeline
+# from huggingface_hub import InferenceClient
+# import time
+# import torch
+
+# device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+# model_id = "openai/whisper-large-v3"
+# client = InferenceClient(model_id)
+# pipe = pipeline("automatic-speech-recognition", model=model_id, device=device)
+
+# # def transcribe(inputs, task):
+# #     if inputs is None:
+# #         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
+
+# #     text = pipe(inputs, chunk_length_s=30)["text"]
+# #     return text
+
+# def transcribe(inputs, task):
+#     start = time.time()
+#     if inputs is None:
+#         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
+
+#     try:
+  
+#         res = client.automatic_speech_recognition(inputs).text
+#         end = time.time() - start
+#         return res, end
+    
+#     except Exception as e:
+#         return fr'Error: {str(e)}'
+        
+
+# demo = gr.Blocks()
+
+# time_taken = gr.Textbox(label="Time taken", type="text")
+
+# mf_transcribe = gr.Interface(
+#     fn=transcribe,
+#     inputs=[
+#         gr.Audio(sources="microphone", type="filepath"),
+#         gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
+#     ],
+#     outputs=["text", time_taken],
+#     title="Whisper Large V3: Transcribe Audio",
+#     description=(
+#         "Transcribe long-form microphone or audio inputs with the click of a button!"
+#     ),
+#     allow_flagging="never",
+# )
+
+# file_transcribe = gr.Interface(
+#     fn=transcribe,
+#     inputs=[
+#         gr.Audio(sources="upload", type="filepath", label="Audio file"),
+#         gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
+#     ],
+#     outputs=["text", time_taken],
+#     title="Whisper Large V3: Transcribe Audio",
+#     description=(
+#         "Transcribe long-form microphone or audio inputs with the click of a button!"
+#     ),
+#     allow_flagging="never",
+# )
+
+
+
+# with demo:
+#     gr.TabbedInterface([mf_transcribe, file_transcribe], ["Microphone", "Audio file"])
+
+# if __name__ == "__main__":
+#     demo.queue().launch()
+
 import requests
 import gradio as gr
 import tempfile
 import os
 from transformers import pipeline
 from huggingface_hub import InferenceClient
+import time
+import torch
+
+# Ensure CUDA is available and set device accordingly
+# device = 0 if torch.cuda.is_available() else -1
 
 model_id = "openai/whisper-large-v3"
 client = InferenceClient(model_id)
-pipe = pipeline("automatic-speech-recognition", model=model_id)
+pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
-# def transcribe(inputs, task):
-#     if inputs is None:
-#         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
-
-#     text = pipe(inputs, chunk_length_s=30)["text"]
-#     return text
-
-def transcribe(inputs, task):
+def transcribe(inputs, task, use_api):
+    start = time.time()
     if inputs is None:
         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
 
     try:
-  
-        res = client.automatic_speech_recognition(inputs).text
-        return res
+        if use_api:
+            # Use InferenceClient (API) if checkbox is checked
+            res = client.automatic_speech_recognition(inputs).text
+        else:
+            # Use local pipeline if checkbox is unchecked
+            res = pipe(inputs, chunk_length_s=30)["text"]
+        
+        end = time.time() - start
+        return res, end
     
     except Exception as e:
-        return fr'Error: {str(e)}'
-        
+        return fr'Error: {str(e)}', None
 
 demo = gr.Blocks()
 
 mf_transcribe = gr.Interface(
-    fn=transcribe,
-    inputs=[
-        gr.Audio(sources="microphone", type="filepath"),
-        gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
-    ],
-    outputs="text",
-    title="Whisper Large V3: Transcribe Audio",
-    description=(
-        "Transcribe long-form microphone or audio inputs with the click of a button!"
-    ),
-    allow_flagging="never",
-)
+                fn=transcribe,
+                inputs=[
+                    gr.Audio(sources="microphone", type="filepath"),
+                    gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
+                ],
+                outputs=["text", "text"],  # Placeholder for transcribed text and time taken
+                title="Whisper Large V3: Transcribe Audio",
+                description=(
+                    "Transcribe long-form microphone or audio inputs with the click of a button!"
+                ),
+                allow_flagging="never",
+            )
 
 file_transcribe = gr.Interface(
-    fn=transcribe,
-    inputs=[
-        gr.Audio(sources="upload", type="filepath", label="Audio file"),
-        gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
-    ],
-    outputs="text",
-    title="Whisper Large V3: Transcribe Audio",
-    description=(
-        "Transcribe long-form microphone or audio inputs with the click of a button!"
-    ),
-    allow_flagging="never",
-)
+                fn=transcribe,
+                inputs=[
+                    gr.Audio(sources="upload", type="filepath", label="Audio file"),
+                    gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
+                ],
+                outputs=["text", "text"],  # Placeholder for transcribed text and time taken
+                title="Whisper Large V3: Transcribe Audio",
+                description=(
+                    "Transcribe long-form microphone or audio inputs with the click of a button!"
+                ),
+                allow_flagging="never",
+            )
 
 with demo:
-    gr.TabbedInterface([mf_transcribe, file_transcribe], ["Microphone", "Audio file"])
+    with gr.Row():
+    # with gr.Column():
+        # Group the tabs for microphone and file-based transcriptions
+        gr.TabbedInterface([mf_transcribe, file_transcribe], ["Microphone", "Audio file"])
+
+        with gr.Column():
+            use_api_checkbox = gr.Checkbox(label="Use API", value=False)  # Checkbox outside
+            time_taken = gr.Textbox(label="Time taken", type="text")  # Time taken outside the interfaces
+
 
 if __name__ == "__main__":
     demo.queue().launch()
