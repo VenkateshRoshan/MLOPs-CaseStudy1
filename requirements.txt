@@ -2,3 +2,5 @@ git+https://github.com/openai/whisper.git
 transformers
 requests
 huggingface_hub
+pytest
+gradio
