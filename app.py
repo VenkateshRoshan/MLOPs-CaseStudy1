@@ -100,7 +100,7 @@ model_id = "openai/whisper-large-v3"
 client = InferenceClient(model_id)
 pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
-def transcribe(inputs, task, use_api):
+def transcribe(inputs, use_api):
     start = time.time()
     if inputs is None:
         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
