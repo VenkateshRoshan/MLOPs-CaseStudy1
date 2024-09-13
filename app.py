@@ -91,7 +91,8 @@ import os
 from transformers import pipeline
 from huggingface_hub import InferenceClient
 import time
-import torch
+# import torch
+# import numpy as np
 
 # Ensure CUDA is available and set device accordingly
 # device = 0 if torch.cuda.is_available() else -1
@@ -102,21 +103,25 @@ pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device
 
 def transcribe(inputs, use_api):
     start = time.time()
+    API_STATUS = ''
     if inputs is None:
         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
 
     try:
         if use_api:
             print(f'Using API for transcription...')
+            API_STATUS = 'Using API it took: '
             # Use InferenceClient (API) if checkbox is checked
             res = client.automatic_speech_recognition(inputs).text
         else:
             print(f'Using local pipeline for transcription...')
             # Use local pipeline if checkbox is unchecked
+            API_STATUS = 'Using local pipeline it took: '
             res = pipe(inputs, chunk_length_s=30)["text"]
         
         end = time.time() - start
-        return res, end
+        return res, API_STATUS + str(round(end, 2)) + ' seconds'
+        # return res, end
     
     except Exception as e:
         return fr'Error: {str(e)}', None
