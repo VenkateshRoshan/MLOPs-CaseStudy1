@@ -1,13 +1,4 @@
-torch
-accelerate
-opencv-python
-spaces
-torchvision
-pillow
-numpy
-huggingface-hub
-gradio
-gradio-imageslider
+git+https://github.com/openai/whisper.git
 transformers
-timm
-kornia
+requests
+huggingface_hub
