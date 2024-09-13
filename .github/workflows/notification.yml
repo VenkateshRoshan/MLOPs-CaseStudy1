@@ -1,4 +1,4 @@
-name: Discord Notification
+name: Discord and Teams Notification
 
 on:
   push:
@@ -23,8 +23,8 @@ jobs:
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK }}
         run: |
-            COMMIT_URL="${{ github.event.head_commit.url }}"
-            COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
-            curl -X POST -H "Content-Type: application/json" \
-            -d "{\"content\": \"@everyone 🔥 **A new commit was pushed to the main branch by $GITHUB_ACTOR** 🔥\\n**Commit Message:** ${COMMIT_MESSAGE} \\n**Commit URL:** ${COMMIT_URL}\"}" \
-            $TEAMS_WEBHOOK_URL    
+          COMMIT_URL="${{ github.event.head_commit.url }}"
+          COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+          curl -H 'Content-Type: application/json' \
+          -d "{\"@type\": \"MessageCard\", \"@context\": \"http://schema.org/extensions\", \"summary\": \"New commit in GitHub\", \"sections\": [{\"activityTitle\": \"🔥 **A new commit was pushed to the main branch by $GITHUB_ACTOR** 🔥\", \"text\": \"**Commit Message:** ${COMMIT_MESSAGE}\\n**Commit URL:** [Click Here](${COMMIT_URL})\"}]}" \
+          $TEAMS_WEBHOOK_URL
