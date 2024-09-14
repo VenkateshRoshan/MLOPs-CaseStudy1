@@ -57,6 +57,6 @@ def test_transcribe_local(mock_pipeline, check_audio_file):
     print(result)
     
     # Assert the mocked transcription matches the expected result
-    assert result.strip() == "Now go away or I shall taunt you a second time!"
+    assert str(result).strip() == "Now go away or I shall taunt you a second time!"
     assert time_taken.startswith('Using local pipeline it took: ')
 
