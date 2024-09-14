@@ -154,7 +154,7 @@ file_transcribe = gr.Interface(
                     gr.Checkbox(label="Use API", value=False)  # Checkbox for API usage
                 ],
                 outputs=["text",gr.Textbox(label="Time taken", type="text")],  # Placeholder for transcribed text and time taken
-                title="Whisper Large V3: Transcribe Audio",
+                title="Welcome to QuickTranscribe.",
                 description=(
                     "Transcribe long-form microphone or audio inputs with the click of a button!"
                 ),
