@@ -67,7 +67,7 @@ mf_transcribe = gr.Interface(
                 ],
                 outputs=[gr.Textbox(label="Transcribed Text", type="text"),
                          gr.Textbox(label="Time taken", type="text"),
-                         gr.Textbox(label="Utilization", type="text") 
+                         gr.Textbox(label="RAM Utilization", type="text") 
                         ],  # Placeholder for transcribed text and time taken
                 title="Welcome to QuickTranscribe",
                 description=(
@@ -85,7 +85,7 @@ file_transcribe = gr.Interface(
                 ],
                 outputs=[ gr.Textbox(label="Transcribed Text", type="text"),
                          gr.Textbox(label="Time taken", type="text"),
-                         gr.Textbox(label="Utilization", type="text") 
+                         gr.Textbox(label="RAM Utilization", type="text") 
                         ],  # Placeholder for transcribed text and time taken
                 title="Welcome to QuickTranscribe",
                 description=(
