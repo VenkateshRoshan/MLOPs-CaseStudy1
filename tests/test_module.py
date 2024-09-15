@@ -52,11 +52,10 @@ def test_transcribe_local(mock_pipeline, check_audio_file):
     mock_pipeline.return_value.return_value['text'] = "Now go away or I shall taunt you a second time!"
     
     # Call the transcribe function with the mock and use_api=False
-    result, time_taken = transcribe(check_audio_file, use_api=False)
-
+    result, time_taken, memory_usage = transcribe(check_audio_file, use_api=False)
     print(result)
-    
-    # Assert the mocked transcription matches the expected result
+    # Now you can add assertions for each of these values
     assert str(result).strip() == "Now go away or I shall taunt you a second time!"
-    assert time_taken.startswith('Using local pipeline it took: ')
+    assert "Using local pipeline" in time_taken
+    assert "RAM Used by code" in memory_usage
 
