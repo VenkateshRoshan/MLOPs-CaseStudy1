@@ -54,7 +54,7 @@ def transcribe(inputs, use_api):
     
     
     except Exception as e:
-        return fr'Error: {str(e)}', None
+        return fr'Error: {str(e)}', None, None
 
 demo = gr.Blocks()
 
