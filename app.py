@@ -50,7 +50,7 @@ def transcribe(inputs, use_api):
         # Calculate the percentage of RAM used by this process
         memory_used_percent = round((memory_used / psutil.virtual_memory().total) * 100, 2)
         
-        return res, API_STATUS + str(round(end, 2)) + ' seconds', f"RAM Used by code: {memory_used_gb} GB ({memory_used_percent}%) Total RAM: {total_memory_gb}"
+        return res, API_STATUS + str(round(end, 2)) + ' seconds', f"RAM Used by code: {memory_used_gb} GB ({memory_used_percent}%) Total RAM: {total_memory_gb} GB"
     
     
     except Exception as e:
