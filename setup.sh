@@ -63,9 +63,6 @@ $SSH_CONNECTION "git clone $GIT_REPO_PATH"
 
 # Activate the virtual environment
 # ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "source $VENV/bin/activate && sudo apt install ffmpeg && cd MLOPs-CaseStudy1 && pip install -r requirements.txt"
-$SSH_CONNECTION "source $VENV/bin/activate && sudo apt install ffmpeg && cd MLOPs-CaseStudy1 && pip install -r requirements.txt"
+$SSH_CONNECTION "source $VENV/bin/activate && sudo apt install ffmpeg && cd MLOPs-CaseStudy1 && pip install -r requirements.txt && python3 ap.py"
 
-# Activate the virtual environment and run the server
-$SSH_CONNECTION "source $VENV/bin/activate && cd MLOPs-CaseStudy1 && python3 app.py"
-
-# The URL Path : rcpaffenroth-23.dyn.wpi.edu:8013 (Gradio Port (8000) + Group Number(13) )
+# The URL Path : paffenroth-23.dyn.wpi.edu:8013 (Gradio Port (8000) + Group Number(13) )
