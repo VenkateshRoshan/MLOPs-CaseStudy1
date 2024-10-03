@@ -12,7 +12,7 @@ import psutil
 # Ensure CUDA is available and set device accordingly
 # device = 0 if torch.cuda.is_available() else -1
 
-model_id = "openai/whisper-large-v3"
+model_id = "openai/whisper-small"
 client = InferenceClient(model_id)
 pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
