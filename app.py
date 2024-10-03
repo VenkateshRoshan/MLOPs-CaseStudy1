@@ -16,6 +16,8 @@ model_id = "openai/whisper-small"
 client = InferenceClient(model_id)
 pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
+print(f'The Server is Running !!!')
+
 def transcribe(inputs, use_api):
     start = time.time()
     API_STATUS = ''
