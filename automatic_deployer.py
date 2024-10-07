@@ -2,7 +2,7 @@ import subprocess
 import os
 import time
 
-PORT=22060
+PORT=22013
 HOST='paffenroth-23.dyn.wpi.edu'
 
 def deploy():
@@ -44,8 +44,9 @@ def monitorStatus(HOST, PORT, checkInterval=5): # for 5 seconds will wait if the
     status=False
     while True:
         if checkStatus(HOST, PORT):
-            # If the connection is successful, run FUN and exit the loop
+            # If the connection is successful, run deploy and exit the loop
             if not status:
+                print('Deploying the app...')
                 deploy()
             status=True
         else:
