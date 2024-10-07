@@ -13,7 +13,7 @@ import psutil
 # device = 0 if torch.cuda.is_available() else -1
 
 model_id = "openai/whisper-small"
-client = InferenceClient(model_id)
+client = InferenceClient(model_id,token=os.getenv('HF_TOKEN'))
 pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
 print(f'The Server is Running !!!')
@@ -107,4 +107,4 @@ with demo:
         #     # time_taken = gr.Textbox(label="Time taken", type="text")  # Time taken outside the interfaces
 
 if __name__ == "__main__":
-    demo.queue().launch()
+    demo.queue().launch(server_name="0.0.0.0", server_port=5000)

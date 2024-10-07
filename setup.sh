@@ -27,42 +27,77 @@ ssh-keygen -f my_key -t ed25519 -N ""
 new_ssh_pub_key=$(<my_key.pub)
 
 # Print the public key
-echo "Public Key:"
-echo "$new_ssh_pub_key"
+# echo "Public Key:"
+# echo "$new_ssh_pub_key"
 
 # Use the old SSH key to connect to the server and append the new public key to authorized_keys
 ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "echo '$new_ssh_pub_key' >> /home/student-admin/.ssh/authorized_keys && chmod 600 /home/student-admin/.ssh/authorized_keys"
 
-# TODO : Comment the old ssh key in the authorized_keys file
-# 
-
-# Verify if the key has been added successfully
 echo "New public key added to authorized_keys on the server."
 
 # Make a variable to store the SSH connection command with 
 SSH_CONNECTION="ssh -i my_key -p $PORT $USER@$HOST"
 
-# run a command to create apt install python3-venv
-# ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "sudo apt-get update && sudo apt-get install python3-venv"
-$SSH_CONNECTION "sudo apt-get update && sudo apt-get install python3-venv"
+# TODO : Comment the old ssh key in the authorized_keys file
+# Use the new SSH key to connect to the server and install Docker
+$SSH_CONNECTION << EOF
+  # Update existing package list
+  sudo apt-get update
+  
+  # Install required packages for Docker
+  sudo apt-get install -y ca-certificates curl gnupg lsb-release
+  
+  # Add Docker's official GPG key
+  sudo mkdir -p /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  
+  # Set up the Docker repository
+  echo \
+    "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    \$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-VENV=./env
+  # Update the package list again
+  sudo apt-get update
 
-# creating a virtual environment
-# ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "python3 -m venv $VENV"
-$SSH_CONNECTION "python3 -m venv $VENV"
+  # Install Docker Engine, Docker CLI, and containerd
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-echo "Virtual environment created. in $VENV"
+  # Start and enable Docker service
+  sudo systemctl start docker
+  sudo systemctl enable docker
 
-# path of git repo
-GIT_REPO_PATH=https://github.com/VenkateshRoshan/MLOPs-CaseStudy1.git
+  # Add current user to docker group (to run Docker commands without sudo)
+  sudo usermod -aG docker $USER
 
-# Clone the git repo
-# ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "git clone $GIT_REPO_PATH"
-$SSH_CONNECTION "git clone $GIT_REPO_PATH"
+  # Verify Docker installation
+  docker --version
+EOF
 
-# Activate the virtual environment
-# ssh -i "$old_ssh_key_name" -p "$PORT" "$USER@$HOST" "source $VENV/bin/activate && sudo apt install ffmpeg && cd MLOPs-CaseStudy1 && pip install -r requirements.txt"
-$SSH_CONNECTION "source $VENV/bin/activate && sudo apt install ffmpeg && cd MLOPs-CaseStudy1 && pip install -r requirements.txt && python3 app.py"
+echo "Docker has been installed on the server."
 
-# The URL Path : paffenroth-23.dyn.wpi.edu:8013 (Gradio Port (8000) + Group Number(13) )
+# Verify if the key has been added successfully
+
+DOCKER_NAME=mlopscs2
+
+# Build Docker image locally
+echo "Building Docker image..."
+# docker build -t $DOCKER_NAME .
+docker build --build-arg HF_TOKEN=$HF_TOKEN -t $DOCKER_NAME .
+
+# Save the Docker image to a tar file
+docker save -o $DOCKER_NAME.tar $DOCKER_NAME
+
+# Copy the Docker image tar to the server
+echo "Copying Docker image to the server..."
+scp -i "$old_ssh_key_name" -P "$PORT" $DOCKER_NAME.tar "$USER@$HOST:/home/$USER/"
+
+# Load the Docker image on the server
+$SSH_CONNECTION "docker load -i /home/$USER/$DOCKER_NAME.tar"
+
+# Run the Docker container on the server with restart policy
+$SSH_CONNECTION "docker run -d --restart unless-stopped -p 5000:5000 $DOCKER_NAME"
+
+# Clean up the Docker image tar file
+$SSH_CONNECTION "rm /home/$USER/$DOCKER_NAME.tar"
+
+echo "Docker container is running on the server."
