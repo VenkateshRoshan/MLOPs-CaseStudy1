@@ -6,17 +6,27 @@ from transformers import pipeline
 from huggingface_hub import InferenceClient
 import time
 import psutil
+from prometheus_client import start_http_server, Summary, Counter, Gauge
 # import torch
 # import numpy as np
 
 # Ensure CUDA is available and set device accordingly
 # device = 0 if torch.cuda.is_available() else -1
 
+# Initialize Prometheus metrics
+REQUEST_COUNT = Counter("transcription_requests_total", "Total transcription requests", ["method"])
+REQUEST_DURATION = Summary("transcription_request_duration_seconds", "Duration of transcription requests in seconds", ["method"])
+MEMORY_USAGE = Gauge("transcription_memory_usage_bytes", "Memory used by the transcription function")
+RAM_USAGE_PERCENTAGE = Gauge("ram_usage_percentage", "Percentage of total RAM used by the transcription function")
+
+# Start the Prometheus HTTP server to expose metrics
+start_http_server(8000)  # Port 8000 is the standard for Prometheus metrics
+
 model_id = "openai/whisper-small"
 client = InferenceClient(model_id,token=os.getenv('HF_TOKEN'))
 pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device)
 
-print(f'The Server is Running !!!')
+print(f'The Server is Running with prometheus Metrics enabled !!!')
 
 def transcribe(inputs, use_api):
     start = time.time()
@@ -28,32 +38,55 @@ def transcribe(inputs, use_api):
         raise gr.Error("No audio file submitted! Please upload or record an audio file before submitting your request.")
 
     try:
-        if use_api:
-            print(f'Using API for transcription...')
-            API_STATUS = 'Using API it took: '
-            # Use InferenceClient (API) if checkbox is checked
-            res = client.automatic_speech_recognition(inputs).text
-        else:
-            print(f'Using local pipeline for transcription...')
-            # Use local pipeline if checkbox is unchecked
-            API_STATUS = 'Using local pipeline it took: '
-            res = pipe(inputs, chunk_length_s=30)["text"]
+        # if use_api:
+        #     print(f'Using API for transcription...')
+        #     API_STATUS = 'Using API it took: '
+        #     # Use InferenceClient (API) if checkbox is checked
+        #     res = client.automatic_speech_recognition(inputs).text
+        # else:
+        #     print(f'Using local pipeline for transcription...')
+        #     # Use local pipeline if checkbox is unchecked
+        #     API_STATUS = 'Using local pipeline it took: '
+        #     res = pipe(inputs, chunk_length_s=30)["text"]
         
-        end = time.time() - start
+        # end = time.time() - start
 
+        # # Measure memory after running the transcription process
+        # memory_after = psutil.Process(os.getpid()).memory_info().rss
+        
+        # # Calculate the difference to see how much memory was used by the code
+        # memory_used = memory_after - memory_before  # Memory used in bytes
+        # memory_used_gb = round(memory_used / (1024 ** 3), 2)  # Convert memory used to GB
+        # total_memory_gb = round(psutil.virtual_memory().total / (1024 ** 3), 2)  # Total RAM in GB
+
+        # # Calculate the percentage of RAM used by this process
+        # memory_used_percent = round((memory_used / psutil.virtual_memory().total) * 100, 2)
+        
+        # return res, API_STATUS + str(round(end, 2)) + ' seconds', f"RAM Used by code: {memory_used_gb} GB ({memory_used_percent}%) Total RAM: {total_memory_gb} GB"
+        method = 'API' if use_api else 'Local Pipeline'
+        
+        # Start timing for Prometheus
+        with REQUEST_DURATION.labels(method=method).time():
+            REQUEST_COUNT.labels(method=method).inc()  # Increment the request counter
+
+            # Transcription
+            if use_api:
+                print(f'Using API for transcription...')
+                res = client.automatic_speech_recognition(inputs).text
+            else:
+                print(f'Using local pipeline for transcription...')
+                res = pipe(inputs, chunk_length_s=30)["text"]
+            
         # Measure memory after running the transcription process
         memory_after = psutil.Process(os.getpid()).memory_info().rss
+        memory_used = memory_after - memory_before
+        MEMORY_USAGE.set(memory_used)  # Set memory usage in bytes
         
-        # Calculate the difference to see how much memory was used by the code
-        memory_used = memory_after - memory_before  # Memory used in bytes
-        memory_used_gb = round(memory_used / (1024 ** 3), 2)  # Convert memory used to GB
-        total_memory_gb = round(psutil.virtual_memory().total / (1024 ** 3), 2)  # Total RAM in GB
-
-        # Calculate the percentage of RAM used by this process
-        memory_used_percent = round((memory_used / psutil.virtual_memory().total) * 100, 2)
+        total_memory_percent = psutil.virtual_memory().percent
+        RAM_USAGE_PERCENTAGE.set(total_memory_percent)  # Set RAM usage as a percentage
         
-        return res, API_STATUS + str(round(end, 2)) + ' seconds', f"RAM Used by code: {memory_used_gb} GB ({memory_used_percent}%) Total RAM: {total_memory_gb} GB"
-    
+        end = time.time() - start
+        return res, f"{method} took: {round(end, 2)} seconds", f"RAM Used by code: {memory_used / (1024 ** 3):.2f} GB ({total_memory_percent}%)"
     
     except Exception as e:
         return fr'Error: {str(e)}', None, None
@@ -107,4 +140,4 @@ with demo:
         #     # time_taken = gr.Textbox(label="Time taken", type="text")  # Time taken outside the interfaces
 
 if __name__ == "__main__":
-    demo.queue().launch()
+    demo.queue().launch(server_name="0.0.0.0", server_port=7860)

@@ -6,3 +6,4 @@ pytest
 gradio
 ffmpeg
 psutil
+prometheus_client

@@ -1,5 +1,6 @@
 import subprocess
 import os
+import socket
 import time
 
 PORT=22013
@@ -18,6 +19,12 @@ def deploy():
         print(result.stdout.decode())  # Print standard output from the script
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while deploying: {e.stderr.decode()}")
+
+def is_port_busy(host, port):
+    """Check if the specified port on the host is busy."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(1)  # 1 second timeout
+        return sock.connect_ex((host, port)) == 0  # Returns True if port is busy
 
 def checkStatus(HOST, PORT):
     print(f'Checking the status of the app...')
