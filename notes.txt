@@ -1,0 +1,67 @@
+### 1 - Deploying product
+
+## Local work
+# Build the docker file
+docker build --build-arg HF_TOKEN=$HF_TOKEN -t mlops-cs3 .
+
+# run the docker image locally
+docker run -p 7860:7860 mlops-cs3
+
+# tag the docker image to docker hub repository
+docker tag mlops-cs3 venkateshroshan/mlops-cs3:latest
+
+# push the docker image to docker hub repository
+sudo docker push venkateshroshan/mlops-cs3:latest
+
+## VM Server
+# login to vm server via ssh
+ssh -p 2222 group13@melnibone.wpi.edu
+
+# pull the docker image
+docker pull venkateshroshan/mlops-cs3:latest
+
+# run the docker image
+docker run -d -p 7860:7860 venkateshroshan/mlops-cs3
+
+# access the application in localhost via ssh tunneling
+ssh -L 7860:localhost:7860 -p 2222 group13@melnibone.wpi.edu
+http://localhost:7860
+
+-> explanation : Forwards local machine’s port 7860 to port 7860 on the VM and the ssh server is listening on port 2222.
+
+### 2 - Monitoring product
+# add prometheus-node-exporter in dockerfile and rebuild the docker image
+RUN apt-get install -y prometheus-node-exporter
+
+# exposing ports 
+# Prometheus Node Exporter metrics
+EXPOSE 25561
+# Prometheus Python app metrics
+EXPOSE 25562
+
+# Run both the Node Exporter and the Gradio application
+CMD ["sh", "-c", "prometheus-node-exporter & python app.py"]
+
+# run docker
+docker run -d -p 25560:7860 -p 25561:9100 -p 25562:8000 venkateshroshan/mlops-cs3:latest3 
+
+# access the application in localhost via ssh tunneling
+ssh -L 25560:localhost:25560 -L 25561:localhost:25561 -L 25562:localhost:25562 -p 2222 group13@melnibone.wpi.edu
+
+Gradio application at http://localhost:25560
+Prometheus monitoring at http://localhost:25561
+Prometheus metrics endpoint at http://localhost:25562
+
+### 3 - Expose your product using ngrok (or a similar service) 
+* Expose your service globally
+# add authtoken of ngrok
+ngrok authtoken YOUR_AUTH_TOKEN
+
+# expose the port
+ngrok http 25560 -> this gives public URL
+
+ngrok http 25561
+
+ngrok http 25562
+
+
