@@ -65,3 +65,29 @@ ngrok http 25561
 ngrok http 25562
 
 
+# Grafana visualization
+docker pull grafana/grafana:latest
+docker run -d -p 25563:3000 --name grafana grafana/grafana:latest
+
+# created a prometheus.yml file
+global:
+  scrape_interval: 5s  # Adjust as needed
+
+scrape_configs:
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['172.17.0.1:25561']
+
+  - job_name: 'app-metrics'
+    static_configs:
+      - targets: ['172.17.0.1:25562']
+
+docker run -d -p 25564:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+
+ssh -L 25560:localhost:25560 -L 25561:localhost:25561 -L 25562:localhost:25562 -L 25563:localhost:25563 -L 25564:localhost:25564 -p 2222 group13@melnibone.wpi.edu
+
+# To check whether the state of the site is up or down
+http://localhost:25564/targets?search=
+
+go to grafana http://localhost:25563
+create a dashboard and add prometheus with the link as 192.168.0.230:25564
