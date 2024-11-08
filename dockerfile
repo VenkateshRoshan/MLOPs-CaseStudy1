@@ -21,9 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Make port 7860 available to the world outside this container
 EXPOSE 7860
 # Prometheus Node Exporter metrics
-EXPOSE 25561
+EXPOSE 9100
 # Prometheus Python app metrics
-EXPOSE 25562
+EXPOSE 8000
 
 
 # Run app.py when the container launches

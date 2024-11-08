@@ -35,15 +35,15 @@ RUN apt-get install -y prometheus-node-exporter
 
 # exposing ports 
 # Prometheus Node Exporter metrics
-EXPOSE 25561
+EXPOSE 9100
 # Prometheus Python app metrics
-EXPOSE 25562
+EXPOSE 8000
 
 # Run both the Node Exporter and the Gradio application
 CMD ["sh", "-c", "prometheus-node-exporter & python app.py"]
 
 # run docker
-docker run -d -p 25560:7860 -p 25561:9100 -p 25562:8000 venkateshroshan/mlops-cs3:latest3 
+docker run -d -p 25560:7860 -p 25561:9100 -p 25562:8000 venkateshroshan/mlops-cs3:latest4
 
 # access the application in localhost via ssh tunneling
 ssh -L 25560:localhost:25560 -L 25561:localhost:25561 -L 25562:localhost:25562 -p 2222 group13@melnibone.wpi.edu
@@ -63,6 +63,9 @@ ngrok http 25560 -> this gives public URL
 ngrok http 25561
 
 ngrok http 25562
+
+# to run forever - use nohup
+nohup ngrok http --log=log.txt http://localhost:25560 > /dev/null &
 
 
 # Grafana visualization
@@ -90,4 +93,26 @@ ssh -L 25560:localhost:25560 -L 25561:localhost:25561 -L 25562:localhost:25562 -
 http://localhost:25564/targets?search=
 
 go to grafana http://localhost:25563
-create a dashboard and add prometheus with the link as 192.168.0.230:25564
+create a dashboard and add prometheus with the link as http://192.168.0.230:25564
+
+# Final RUN
+docker pull venkateshroshan/mlops-cs3:latest4
+
+docker run -d -p 25560:7860 -p 25561:9100 -p 25562:8000 --name group13_app venkateshroshan/mlops-cs3:latest4
+
+docker pull docker pull grafana/grafana:latest
+
+docker run -d -p 25563:3000 --name group13_grafana grafana/grafana:latest
+
+docker pull prom/prometheus
+
+docker run -d -p 25564:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml --name group13_prometheus prom/prometheus
+
+ssh -L 25560:localhost:25560 -L 25561:localhost:25561 -L 25562:localhost:25562 -L 25563:localhost:25563 -L 25564:localhost:25564 -p 2222 group13@melnibone.wpi.edu
+
+# visualize these 4 metrics
+transcription_requests_total - Total transcription requests
+transcription_request_duration_seconds - Duration of transcription requests in seconds
+transcription_memory_usage_bytes - Memory used by the transcription function
+ram_usage_percentage - Percentage of total RAM used by the transcription function
+
