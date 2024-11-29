@@ -28,7 +28,7 @@ pipe = pipeline("automatic-speech-recognition", model=model_id) #, device=device
 
 print(f'The Server is Running with prometheus Metrics enabled !!!')
 
-def transcribe(inputs, use_api):
+def transcribe(inputs, use_api=True):
     start = time.time()
     API_STATUS = ''
     
@@ -98,7 +98,7 @@ mf_transcribe = gr.Interface(
                 inputs=[
                     gr.Audio(sources="microphone", type="filepath"),
                     # gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
-                    gr.Checkbox(label="Use API", value=False)
+                    # gr.Checkbox(label="Use API", value=True)
                 ],
                 outputs=[gr.Textbox(label="Transcribed Text", type="text"),
                          gr.Textbox(label="Time taken", type="text"),
@@ -116,7 +116,7 @@ file_transcribe = gr.Interface(
                 inputs=[
                     gr.Audio(sources="upload", type="filepath", label="Audio file"),
                     # gr.Radio(["transcribe", "translate"], label="Task", value="transcribe"),
-                    gr.Checkbox(label="Use API", value=False)  # Checkbox for API usage
+                    # gr.Checkbox(label="Use API", value=False)  # Checkbox for API usage
                 ],
                 outputs=[ gr.Textbox(label="Transcribed Text", type="text"),
                          gr.Textbox(label="Time taken", type="text"),

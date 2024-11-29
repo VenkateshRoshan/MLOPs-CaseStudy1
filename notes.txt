@@ -116,3 +116,9 @@ transcription_request_duration_seconds - Duration of transcription requests in s
 transcription_memory_usage_bytes - Memory used by the transcription function
 ram_usage_percentage - Percentage of total RAM used by the transcription function
 
+### Case study 4
+docker build --build-arg HF_TOKEN=$HF_TOKEN -t mlops-cs4 .
+docker tag mlops-cs4 venkateshroshan/mlops-cs4:latest
+sudo docker push venkateshroshan/mlops-cs4:latest
+docker pull venkateshroshan/mlops-cs4:latest
+docker run -d -p 7860:7860 -p 8001:8000 -p 9100:9100 venkateshroshan/mlops-cs4:latest
