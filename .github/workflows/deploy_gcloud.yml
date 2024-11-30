@@ -1,0 +1,87 @@
+name: Deploy to Google Cloud
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: mlops-cs4
+  GCE_INSTANCE: mlops-cs4
+  GCE_ZONE: us-central1-a
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    # Authenticate to Google Cloud
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    # Setup gcloud CLI
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+
+    # Enable required APIs
+    - name: Enable APIs
+      run: |
+        gcloud services enable compute.googleapis.com
+
+    # Create or update compute instance
+    - name: Deploy compute instance
+      run: |
+        if ! gcloud compute instances describe ${{ env.GCE_INSTANCE }} --zone=${{ env.GCE_ZONE }}; then
+          gcloud compute instances create ${{ env.GCE_INSTANCE }} \
+            --image-family=ubuntu-2004-lts \
+            --image-project=ubuntu-os-cloud \
+            --machine-type=e2-medium \
+            --zone=${{ env.GCE_ZONE }} \
+            --boot-disk-size=30GB \
+            --tags=http-server \
+            --metadata-from-file=startup-script=gcp_instance_startup_script.sh
+        fi
+
+    # Create firewall rule if it doesn't exist
+    - name: Setup firewall rule
+      run: |
+        if ! gcloud compute firewall-rules describe allow-ports; then
+          gcloud compute firewall-rules create allow-ports \
+            --direction=INGRESS \
+            --priority=1000 \
+            --network=default \
+            --action=ALLOW \
+            --rules=tcp:7860,tcp:8000,tcp:9100 \
+            --source-ranges=0.0.0.0/0 \
+            --target-tags=http-server
+        fi
+
+    # Wait for instance to be ready
+    - name: Wait for instance
+      run: sleep 180
+
+    # Pull and run Docker container
+    - name: Deploy container
+      run: |
+        gcloud compute ssh ${{ env.GCE_INSTANCE }} --zone=${{ env.GCE_ZONE }} --command="sudo docker pull venkateshroshan/mlops-cs4:latest && sudo docker run -d -p 7860:7860 -p 8000:8000 -p 9100:9100 venkateshroshan/mlops-cs4:latest"
+
+    # Get instance IP
+    - name: Get instance IP
+      run: |
+        echo "EXTERNAL_IP=$(gcloud compute instances describe ${{ env.GCE_INSTANCE }} --zone=${{ env.GCE_ZONE }} --format='get(networkInterfaces[0].accessConfigs[0].natIP)')" >> $GITHUB_ENV
+
+    # Output deployment information
+    - name: Deployment Info
+      run: |
+        echo "Deployment complete!"
+        echo "Your application is accessible at:"
+        echo "http://${{ env.EXTERNAL_IP }}:7860"
+        echo "http://${{ env.EXTERNAL_IP }}:8000"
+        echo "http://${{ env.EXTERNAL_IP }}:9100"

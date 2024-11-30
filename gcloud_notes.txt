@@ -1,0 +1,7 @@
+1 . sudo apt-get update && sudo apt-get install google-cloud-sdk
+2 . gcloud init
+ -> it will open the browser
+ -> choose the account
+ -> give access
+ -> then it will ask for project to choose
+3 . 
